@@ -287,9 +287,7 @@ expiresIn: '7d';
 - Atualmente essa rota está desprotegida e não exige autenticação.
 - Adicionar um middleware de autenticação
 
-### Promisify
-
-Utilizar o promisify para transformar chamadas callback em assícronas;
+> **Nota:** Utilizar o promisify para transformar chamadas callback em assícronas;
 
 - Criar em app uma pasta middleware e uma arquivo auth.js, com o seguinte formato:
 
@@ -312,35 +310,45 @@ export default (req, res, next) => {
 routes.use(authMiddleware);
 ```
 
-## 1. Configurando Multer
+## Update de usuário
 
----
+1. Criar método update no `UserController`, recevendo do request email e oldPassword.
+2. Utilizar o req.userId (inserido pelo middleware de autenticação) para buscar o usuário no model com `User.findByPk(req.userId)`.
+3. Validar email, se usuário existe e se a password está correta
+4. Para fazer o update utililizar `user.update(req.body);`
 
-Multer é middleware que permite fazer uploads de arquivos através do `multipart/form-data`.
+## Validar dados de entrada
 
-- Criar arquivo de configuração do multer `confif\multer.js`.
-- definir as configurações: destination e filename.
-- destination: define a pasta onde os arquivos serão gravados
-- filename: instalar o pacote crypto paara gerar um hexa randomico. Utilizar o hexa gerado como nome do arquivo e utlizar o extname para manter a extensão orignal do arquivo. O nome original do arquivo pode ser acessado através do atributo originalname.
+Utiliar a biblioteca de validação (schema validation) **YUP**.
 
-Avatar do usuário
-Listagem de prestadores de serviço
-Migration e model de agendamento
-Agendamento de serviço
-Validações de agendamento
-Listando agendamentos do usuário
-Aplicando paginação
-Listando agenda do prestador
-Configurando MongoDB
-Notificando novos agendamentos
-Listando notificações do usuário
-Marcar notificações como lidas
-Cancelamento de agendamento
-Configurando Nodemailer
-Configurando templates de e-mail
-Configurando fila com Redis
-Monitorando falhas na fila
-Listando horários disponíveis
-Campos virtuais no agendamento
-Tratamento de exceções
-Variáveis ambiente
+```sh
+yarn add yup
+```
+
+Import do Yup
+
+```javascript
+import * as Yup from 'yup';
+```
+
+Exemplo de um schema yup
+
+```javascript
+const schema = Yup.object().shape({
+  name: Yup.string().required(),
+  email: Yup.string()
+    .email()
+    .required(),
+  password: Yup.string()
+    .required()
+    .min(6),
+});
+```
+
+Validando o schema
+
+```javascript
+if (!(await schema.isValid(req.body))) {
+  return res.status(400).json({ error: 'Validation fails!' });
+}
+```
