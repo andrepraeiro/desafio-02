@@ -229,6 +229,89 @@ routes.post('/users', USerController.store);
 
 ## Gerando hash da senha
 
+Ao acadastrar o usuário deve enviar a senha, e a aplicação gerar o hash referente a senha enviada.
+
+Para isso, devemos instalar a extensão `bcrypt.js`.
+
+```sh
+yarn add bcryptjs
+```
+
+- Para usá-lo, deve realizar um import do bcrypr no model. - Criar um campo virtual para a password.
+- adicionar um hook `beforeSave` no model para gerar o hash da password.
+
+```javascript
+this.addHook('beforeSave', (user) => {
+  if (user.password){
+    user.password_hash = await bcrypt.hash(user.password, 8)
+  }
+});
+```
+
+- 8 representa a quantidade de rounds da criptografia.
+
+* acrescentar o método `checkPassword`, onde recebendo uma senha deve comparar se é correspondente ao hash.
+
+```javascript
+checkPassword(password) {
+  return bcrypt.compare(password, this.password_hash);
+}
+```
+
+## Autenticação JWT
+
+- Criar um controller `SessionController` com método store, para gerenciar sessões.
+- adicionar uma nova extensão `jsonwebtoken`
+
+```sh
+yarn add jsonwebtoken
+```
+
+- importar o jwt no `SessionController`
+- consultar pelo email se o usuário exsite
+- se não existir retornar que o usuário não existe
+- verificar se a senha é válida utilizando o método checkPassword do user model. Se a senha for inválida retornar que a senha não bate.
+- Se passou por tudo e não retornou nada inválido, retornar os dados do user (id, name, email) e adicionar o token.
+
+```javascript
+token: jwt.sign({ id }, secret);
+expiresIn: '7d';
+```
+
+- definir os dados do token (secret e expiresIn) em um arquivo de configuração `config/auth.js`.
+
+## Middleware de autenticação
+
+- Adicionar um método update no `UserController`.
+- Adicionar em routes uma rota de update de usuários. `PUT /users`.
+- Atualmente essa rota está desprotegida e não exige autenticação.
+- Adicionar um middleware de autenticação
+
+### Promisify
+
+Utilizar o promisify para transformar chamadas callback em assícronas;
+
+- Criar em app uma pasta middleware e uma arquivo auth.js, com o seguinte formato:
+
+```javascript
+import {promisify} from 'util'
+export default (req, res, next) => {
+  const authHeader = req.headers.authorization;
+  ...
+  const decoded = await promisify(jwt.verify)(token, authConfig.secret);
+  //adiciona na req o id do usuário autenticado
+  req.UserId = decoded.id
+  return next();
+};
+```
+
+- importar o auth middleware no router.
+- adicionar o use o middler acima das rotas que precisam ser autenticadas. (qualquer rota abaixo desse use será autenticada);
+
+```javascript
+routes.use(authMiddleware);
+```
+
 ## 1. Configurando Multer
 
 ---
