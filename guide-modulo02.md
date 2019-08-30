@@ -49,7 +49,7 @@ export default {
 
 ```javascript
 import multer from 'multer';
-import multerConfig from './config/mulkter';
+import multerConfig from './config/multer';
 ...
 
 const upload = multer(multerConfig)
@@ -104,7 +104,7 @@ Criar um relacionamento entre a tabela users e files.
 1. Criando migrate para adcionar o novo campo na tabeça users
 
 ```sh
-yarn sequelize migrate:create --name=add-avatar-field-to-users
+yarn sequelize migration:create --name=add-avatar-field-to-users
 ```
 
 2. migration com a nova coluna e a referência (fk)
