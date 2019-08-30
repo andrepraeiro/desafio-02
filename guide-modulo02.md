@@ -177,27 +177,253 @@ url: {
 
 ```javascript
 ...
-this.server.use('/files', express.static(path.resolve(__dirname, )));
+this.server.use('/files',express.static(
+    path.resolve(__dirname, '..', 'tmp', 'uploads' )
+  )
+);
+```
 
+## Validações de agendamento
 
-## Migration e model de agendamento
+Utilizar a biblioteca date-fns para métodos de manipulação de data e hora.
 
-Agendamento de serviço
-Validações de agendamento
-Listando agendamentos do usuário
-Aplicando paginação
-Listando agenda do prestador
-Configurando MongoDB
-Notificando novos agendamentos
-Listando notificações do usuário
-Marcar notificações como lidas
-Cancelamento de agendamento
-Configurando Nodemailer
-Configurando templates de e-mail
+```sh
+yarn add date-fns
+```
+
+## Aplicando paginação
+
+Aplicar limit e offset no findAll do model.
+
+## Configurando MongoDB
+
+Criar o container do mongodb
+
+```sh
+docker run --name mongobarber -p 27017:27017 -d -t mongo
+```
+
+Instalar o ORM do mongo
+
+```sh
+yarn add mongoose
+```
+
+Em `src/database/index` configurar o mongoose.
+
+```javascript
+import mongoose from 'mongoose';
+...
+constructor() {
+  ...
+  this.mongo();
+}
+...
+mongo() {
+  this.mongoConnection = mongoose.connect({
+    'mongodb://localhost:27017/gobarber',
+    { useNewUrlParser: true, useFindAndModify: true}
+  });
+}
+```
+
+## Notificando novos agendamentos
+
+- Enviar notificação para o prestador de serviço.
+- Schemas do mongo
+
+1. Cria em `app` a pasta `schemas` e dentro dela o arquivo `Notification.js`.
+
+```javascript
+import mongoose from 'mongoose';
+const NotificationSchema = new mongoose.Schema(
+  {
+    content: {
+      type: String,
+      required: true,
+    },
+    user: {
+      type: Number,
+      required: true,
+    },
+    read: {
+      type: boolean,
+      required: true,
+      default: false,
+    },
+  },
+  {
+    timestamps: true,
+  }
+);
+export default mongoose.model('Notification', NotificationSchema);
+```
+
+2. no método store do AppointmentController.
+
+```javascript
+...
+await Notification.create({
+  content: 'Novo agendamento de Cliente #1 para o dia xx de xxxx à 99:99h',
+  user: provier_id,
+});
+
+```
+
+## Marcar notificações como lidas
+
+Usar método do model findByIdAndUpdate
+
+## Configurando Nodemailer
+
+Enviar email ao cancelar um agendamento
+
+```
+yarn add nodemailer
+```
+
+1. criar config mail.
+
+```javascript
+export default {
+  host:'',
+  port: '',
+  secure: false,
+  auth: {
+    user: '',
+    pass: '',
+  },
+  default: {
+    from: 'Equipe GoBarber <noreply@gobarber.com>
+  }
+}
+```
+
+Ambiente de email pago
+Amazon SES, Mailgun, SparkPost, Mandril (mailchip)
+
+Mailtrap (ambiente de email para dev)
+
+2. Criar pasta `src/lib`, e criar arquivo `mail.js`
+
+```javascript
+...
+import nodemailer
+...
+
+this.transporter = nodemailer.createTransport({
+  host, port, secure, auth: auth.user? auth : null,
+});
+```
+
+3. método sendMail
+
+```javascript
+return this.transporter.sendMail({
+  ...mailConfig.default,
+  ...message,
+});
+```
+
+4. utilizando o sendMail
+
+```javascript
+...
+await Mail.sendMail({
+  to: `${appointment.provider.name}<${appointment.provider.email}>`,
+  subject: 'Agendamento Cancelado',
+  text: 'Cancelamento realizado',
+})
+```
+
+## Configurando templates de e-mail
+
+Template engine - Handlebars
+
+```sh
+yarn add express-handlebars nodemailer-express-handlebars
+```
+
+1. Criar pastas `src/app/views/emails`
+2. Dentro de `src/app/views/emails`, criar `/layouts` e `/partials`
+3. Dentro de `src/app/views/emails`, criar cancellation.hbs
+4. Dentro de `src/app/views/emails/layouts`, criar default.hbs
+
+> default.hbs
+
+```
+<div
+  style="font-family: Arial, Helvetica, sans-serif; font-size: 16px; line-height: 1.6; color: #222; max-width: 600px">
+  {{{ body }}}
+  {{> footer }}
+</div>
+```
+
+> src/app/views/emails/partials/footer.hbs
+
+```
+<br />
+Equipe GoBarber
+```
+
+> src/app/views/emails/partials/cancellation.hbs
+
+```
+<strong> Olá, {{provider}}</strong>
+
+<p>Houve um cancelamento de horário, confira os detalhes abaixo:</p>
+<p>
+  <strong>Cliente: </strong> {{ user }} <br />
+  <strong>Data/hora: </strong> {{ date }} <br />
+  <br />
+  <small>
+    O horário está novamente disponível para novos agendamentos.
+  </small>
+</p>
+
+```
+
+5. Em `src/lib/mail.js`
+
+```javascript
+...
+import hbs from 'nodemailer-express-handlebars';
+import exphbs from 'express-handlebars';
+...
+ constructor() {
+   ...
+    this.configureTemplate();
+    ...
+ }
+
+ configureTemplate() {
+    const viewPath = resolve(__dirname, '..', 'app', 'views', 'emails');
+
+    this.transporter.use(
+      'compile',
+      hbs({
+        viewEngine: exphbs.create({
+          layoutsDir: resolve(viewPath, 'layouts'),
+          partialsDir: resolve(viewPath, 'partials'),
+          defaultLayout: 'default',
+          extname: '.hbs',
+        }),
+        viewPath,
+        extName: '.hbs',
+      })
+    );
+  }
+```
+
+---
+
 Configurando fila com Redis
 Monitorando falhas na fila
 Listando horários disponíveis
 Campos virtuais no agendamento
 Tratamento de exceções
 Variáveis ambiente
+
+```
+
 ```
