@@ -415,15 +415,144 @@ import exphbs from 'express-handlebars';
   }
 ```
 
----
+## Configurando fila com Redis
 
-Configurando fila com Redis
-Monitorando falhas na fila
-Listando horários disponíveis
-Campos virtuais no agendamento
-Tratamento de exceções
-Variáveis ambiente
+Utilizar o sistema de filas para melhorar o desempenho.
+
+Da forma atual o envio de emails está lenvando muito tempo. A ideia é deixar essa responsabilidade com as filas (brackground jobs), que são serviços que rodam em segundo plano.
+
+1. Para isso vamos usar o Redis, que é um banco não relacional, sem schema, apenas chave-valor.
+
+> Criando uma instância do Redis em um docker container
+
+```sh
+docker run --name redisbarber -p 6379:6379 -d  -t redis:alpine
+```
+
+2. Instalar o Bee Queue, biblioteca de controle de filas.
+
+```sh
+yarn add bee-queue
+```
+
+3. Criar `src/config/redis.js`
+
+```javascript
+{
+  host:'127.0.0.1',
+  port:6379,
+}
+```
+
+4. Criar `src/lib/queue.js`
+
+```javascript
+import Bee from 'bee-queue';
+...
+const jobs = [CancellationMail];
+...
+
+constructor() {
+  this.queues = {};
+  ths.init();
+}
+
+init() {
+  jobs.forEach(({key, handle}) => {
+    this.queues[key] = {
+      bee: new Bee(key, {
+        redis:redisConfig,
+      }),
+      handle,
+    }
+  });
+}
+
+add(queue, job) {
+  return this.queues[queue].bee.createJob(job).save();
+}
+
+processQueue() {
+  jobs.forEach(job => {
+    const {bee, handle} = this.queues[job, key];
+    bee.process(handle);
+  })
+}
 
 ```
 
+5. Criar `src/app/jobs/CancellationMail.js`
+
+```javascript
+class CancellationMail
+...
+get key() {
+  return 'CancellationMail'
+}
+
+async handle(data) {
+  Mail.send({
+    ...
+  });
+}
 ```
+
+> A ideia é uma fila para cada background job
+
+6. Em `AppointmentController` substituir o código de envio de email por:
+
+```javascript
+...
+
+await Queue.add(CancellationMail.key, {
+  appointment
+})
+
+...
+```
+
+7. Criar `src\queue.js`
+
+```javascript
+import Queue from './lib/Queue';
+
+Queue.processQueue();
+```
+
+8. No `package.json` adicionar novo script
+
+```json
+"scripts": [
+
+  "queue": "nodemon src/queue.js"
+]
+```
+
+## Monitorando falhas na fila
+
+1. Em `src/lib/queue.js`
+
+```javascript
+...
+
+processQueue() {
+  ...
+  bee.on('failed', this.handleFailure).process(handle);
+  ...
+}
+
+...
+
+handleFailure(job, err) {
+  console.log(`Queue ${job.queue.name}: FAILED`, err);
+}
+```
+
+## Tratamento de exceções
+
+1. abrir uma conta no <https://sentry.io>
+2. seguir instruções do site.
+
+## Variáveis ambiente
+
+1. Configurar variáveis de ambiente
