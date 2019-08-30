@@ -3,12 +3,12 @@ module.exports = {
     return queryInterface.addColumn('users', 'avatar_id', {
       type: Sequelize.INTEGER,
       references: { model: 'files', key: 'id' },
-      onUpdate: '',
-      onDelete: '',
+      onUpdate: 'CASCADE',
+      onDelete: 'SET NULL',
+      allowNull: true,
     });
   },
-
-  down: (queryInterface, Sequelize) => {
-    return queryInterface.dropTable('users');
+  down: queryInterface => {
+    return queryInterface.removeColumn('users', 'avatar_id');
   },
 };
