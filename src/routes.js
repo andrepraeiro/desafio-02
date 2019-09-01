@@ -5,6 +5,7 @@ import UserController from './app/controllers/UserController';
 import SessionController from './app/controllers/SessionController';
 import FileController from './app/controllers/FileController';
 import MeetupController from './app/controllers/MeetupController';
+import SubscriptionController from './app/controllers/SubscriptionController';
 
 import authMiddleware from './app/middleware/auth';
 
@@ -29,5 +30,7 @@ routes.post('/meetups', MeetupController.store);
 routes.put('/meetups', MeetupController.update);
 routes.get('/meetups', MeetupController.index);
 routes.delete('/meetups', MeetupController.delete);
+
+routes.post('/subscription', SubscriptionController.store);
 
 export default routes;
