@@ -1,4 +1,5 @@
 import Sequelize from 'sequelize';
+import Mongoose from 'mongoose';
 
 import DatabaseConfig from '../config/database';
 
@@ -12,6 +13,7 @@ const models = [User, File, Meetup, Subscription];
 class Database {
   constructor() {
     this.init();
+    this.mongo();
   }
 
   init() {
@@ -19,6 +21,13 @@ class Database {
     models.map(model => model.init(this.connection));
     models.map(
       model => model.associate && model.associate(this.connection.models)
+    );
+  }
+
+  mongo() {
+    this.mongoConnection = Mongoose.connect(
+      'mongodb://localhost:27017/meetapp',
+      { useNewUrlParser: true, useFindAndModify: true }
     );
   }
 }

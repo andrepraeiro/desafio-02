@@ -220,10 +220,10 @@ constructor() {
 }
 ...
 mongo() {
-  this.mongoConnection = mongoose.connect({
+  this.mongoConnection = mongoose.connect(
     'mongodb://localhost:27017/gobarber',
     { useNewUrlParser: true, useFindAndModify: true}
-  });
+  );
 }
 ```
 
@@ -286,7 +286,7 @@ yarn add nodemailer
 
 ```javascript
 export default {
-  host:'',
+  host: '',
   port: '',
   secure: false,
   auth: {
@@ -294,9 +294,9 @@ export default {
     pass: '',
   },
   default: {
-    from: 'Equipe GoBarber <noreply@gobarber.com>
-  }
-}
+    from: 'Equipe GoBarber <noreply@gobarber.com>',
+  },
+};
 ```
 
 Ambiente de email pago
@@ -522,10 +522,10 @@ Queue.processQueue();
 8. No `package.json` adicionar novo script
 
 ```json
-"scripts": [
+"scripts": {
 
   "queue": "nodemon src/queue.js"
-]
+}
 ```
 
 ## Monitorando falhas na fila

@@ -1,41 +1,28 @@
 import * as Yup from 'yup';
-import { parseISO, isPast } from 'date-fns';
+import { parseISO, isPast, startOfDay, endOfDay } from 'date-fns';
+import { Op } from 'sequelize';
 import Meetup from '../models/Meetup';
 import User from '../models/User';
-import File from '../models/File';
 
 class MeetupController {
   async index(req, res) {
-    const meetups = await Meetup.findAll({
-      where: {
-        organizer_id: req.userId,
-      },
-      attributes: ['id', 'title', 'description', 'datetime'],
-      order: ['datetime'],
-      include: [
-        {
-          model: User,
-          as: 'organizer',
-          attributes: ['id', 'name'],
-          include: {
-            model: File,
-            as: 'avatar',
-            attributes: ['id', 'path', 'url'],
-          },
-        },
-        {
-          model: File,
-          as: 'banner',
-          attributes: ['id', 'path', 'url'],
-        },
-      ],
-    });
+    const where = {};
+    const page = req.query.page || 1;
 
-    if (!meetups) {
-      return res
-        .status(401)
-        .json({ error: 'There are not meetups for this organizer.' });
+    if (req.query.date) {
+      const searchDate = parseISO(req.query.date);
+
+      where.datetime = {
+        [Op.between]: [startOfDay(searchDate), endOfDay(searchDate)],
+      };
     }
+
+    const meetups = await Meetup.findAll({
+      where,
+      include: [{ model: User, as: 'organizer' }],
+      limit: 10,
+      offset: 10 * page - 10,
+    });
 
     return res.json(meetups);
   }
@@ -68,7 +55,8 @@ class MeetupController {
   }
 
   async update(req, res) {
-    const { id, datetime } = req.body;
+    const { id } = req.params;
+    const { datetime } = req.body;
 
     const meetup = await Meetup.findByPk(id);
     if (!meetup) {
@@ -109,7 +97,7 @@ class MeetupController {
   }
 
   async delete(req, res) {
-    const { id } = req.body;
+    const { id } = req.params;
 
     const meetup = await Meetup.findByPk(id);
     if (!meetup) {
