@@ -19,3 +19,16 @@ export function signInFailure() {
     type: types.auth.SIGN_IN_FAILURE,
   };
 }
+
+export function signUpRequest(name, email, password) {
+  return {
+    type: types.auth.SIGN_UP_REQUEST,
+    payload: { name, email, password },
+  };
+}
+
+export function signUpFailure() {
+  return {
+    type: types.auth.SIGN_UP_FAILURE,
+  };
+}
