@@ -1,22 +1,21 @@
 import { takeLatest, all, call, put } from 'redux-saga/effects';
+import { toast } from 'react-toastify';
 import api from '~/services/api';
-import { signInSuccess } from './actions';
+import { signInSuccess, signInFailure } from './actions';
 import history from '~/services/history';
+import types from '~/store/modules/types';
 
 export function* signIn({ payload }) {
-  console.tron.log('response');
   const { email, password } = payload;
   try {
     const response = yield call(api.post, 'sessions', { email, password });
-    console.tron.log(response);
     const { token, user } = response.data;
     yield put(signInSuccess(token, user));
     history.push('/dashboard');
   } catch (error) {
-    console.tron.log(error);
+    toast.error('Falha na autenticação, verifique os seus dados');
+    yield put(signInFailure());
   }
-
-  // todo: usuário não é organizador
 }
 
-export default all([takeLatest('@auth/SIGN_IN_REQUEST', signIn)]);
+export default all([takeLatest(types.auth.SIGN_IN_REQUEST, signIn)]);
