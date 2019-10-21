@@ -1,30 +1,40 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { useDispatch } from 'react-redux';
 
 import { Container, Content, Profile } from './styles';
 
 import logo from '~/assets/logo.svg';
 import Notifications from '../Notifications';
+import { signOut } from '~/store/modules/auth/actions';
 
 export default function Header() {
+  const dispatch = useDispatch();
+
+  function handleSignOut() {
+    dispatch(signOut());
+  }
+
   return (
     <Container>
       <Content>
         <nav>
-          <img src={logo} alt="Meetapp" />
-          <Link to="/dashboard">DASHBOARD</Link>
+          <div>
+            <Link to="/dashboard">
+              <img src={logo} alt="Meetapp" />
+            </Link>
+          </div>
         </nav>
         <aside>
           <Notifications />
           <Profile>
             <div>
               <strong>André Praeiro</strong>
-              <Link to="/profile">Meu perfil</Link>
+              <Link to="/profile">Meu Perfil</Link>
             </div>
-            <img
-              src="https://api.adorable.io/avatars/50/abott@adorable.png"
-              alt="André Praeiro"
-            />
+            <button type="button" onClick={handleSignOut}>
+              Sair
+            </button>
           </Profile>
         </aside>
       </Content>
