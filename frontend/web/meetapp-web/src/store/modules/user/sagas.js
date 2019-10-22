@@ -6,7 +6,6 @@ import { updateProfileFailure, updateProfileSuccess } from './actions';
 
 export function* updateProfile({ payload }) {
   try {
-    console.tron.log('payload', payload);
     const { name, email, ...rest } = payload;
     const profile = {
       name,
