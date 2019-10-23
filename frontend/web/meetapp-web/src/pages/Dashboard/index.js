@@ -1,8 +1,19 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { MdAddCircleOutline, MdKeyboardArrowRight } from 'react-icons/md';
 import { Container, Header } from './styles';
+import api from '~/services/api';
 
 export default function Dashboard() {
+  const [meetup, setMeetup] = useState([]);
+
+  useEffect(() => {
+    async function loadMeetup() {
+      const response = await api.get('organizing', {});
+      setMeetup(response.data);
+    }
+    loadMeetup();
+  }, [meetup]);
+
   return (
     <Container>
       <Header>
@@ -13,34 +24,15 @@ export default function Dashboard() {
         </button>
       </Header>
       <ul>
-        <li>
-          <strong>Meetup do react native</strong>
-          <div>
-            <span>24 de Junho, às 20h</span>
-            <MdKeyboardArrowRight size={20} color="#fff" />
-          </div>
-        </li>
-        <li>
-          <strong>Meetup do react native</strong>
-          <div>
-            <span>24 de Junho, às 20h</span>
-            <MdKeyboardArrowRight size={20} color="#fff" />
-          </div>
-        </li>
-        <li>
-          <strong>Meetup do react native</strong>
-          <div>
-            <span>24 de Junho, às 20h</span>
-            <MdKeyboardArrowRight size={20} color="#fff" />
-          </div>
-        </li>
-        <li>
-          <strong>Meetup do react native</strong>
-          <div>
-            <span>24 de Junho, às 20h</span>
-            <MdKeyboardArrowRight size={20} color="#fff" />
-          </div>
-        </li>
+        {meetup.map(meet => (
+          <li key={meet.id}>
+            <strong>{meet.title}</strong>
+            <div>
+              <span>{meet.datetime}</span>
+              <MdKeyboardArrowRight size={20} color="#fff" />
+            </div>
+          </li>
+        ))}
       </ul>
     </Container>
   );
